@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-900 text-gray-100 font-inter antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-oswald tracking-wide;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-neon-red text-white font-oswald font-bold uppercase tracking-wider rounded transition-all duration-300 hover:bg-red-600 hover:shadow-[0_0_15px_rgba(255,42,42,0.6)];
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-dark-700 text-white font-oswald font-bold uppercase tracking-wider rounded transition-all duration-300 hover:bg-dark-800 border border-dark-700 hover:border-gray-500;
+  }
+  
+  .btn-success {
+    @apply px-6 py-3 bg-neon-green text-dark-900 font-oswald font-bold uppercase tracking-wider rounded transition-all duration-300 hover:bg-green-500 hover:shadow-[0_0_15px_rgba(0,255,136,0.6)];
+  }
+
+  .card-panel {
+    @apply bg-dark-800 border border-dark-700 rounded-lg p-6 shadow-xl;
+  }
+  
+  .input-field {
+    @apply w-full bg-dark-900 border border-dark-700 rounded px-4 py-3 text-white focus:outline-none focus:border-neon-red focus:ring-1 focus:ring-neon-red transition-colors;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a; 
+}
+::-webkit-scrollbar-thumb {
+  background: #262626; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff2a2a; 
+}
+
+/* Fight to Nanade styles */
+.glow-blue {
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.5), 0 0 20px rgba(0, 242, 255, 0.3);
+}
+
+.glow-yellow {
+  text-shadow: 0 0 10px rgba(255, 255, 0, 0.5), 0 0 20px rgba(255, 255, 0, 0.3);
+}
+
+.box-glow-blue {
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+}
+
+.box-glow-yellow {
+  box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
+}
+
+@keyframes pulse-neon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-neon {
+  animation: pulse-neon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
