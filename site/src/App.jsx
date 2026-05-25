@@ -45,6 +45,11 @@ export default function App() {
   const [editLutaL2, setEditLutaL2] = useState('');
   const [editLutaData, setEditLutaData] = useState('');
   const [editLutaHorario, setEditLutaHorario] = useState('');
+  // Lutador edit/delete state
+  const [editingLutadorId, setEditingLutadorId] = useState(null);
+  const [editingLutadorNome, setEditingLutadorNome] = useState('');
+  const [editingLutadorCategoria, setEditingLutadorCategoria] = useState('');
+  const [editingLutadorArte, setEditingLutadorArte] = useState('');
   
   const [betAmounts, setBetAmounts] = useState({});
   const [showBetFeedback, setShowBetFeedback] = useState(false);
@@ -166,6 +171,58 @@ export default function App() {
       alert('Lutador registrado com sucesso!');
     } catch (error) {
       alert('Erro ao registrar lutador: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoadingMsg('');
+    }
+  };
+
+  // Edit / Delete lutador
+  const startEditLutador = (lutador) => {
+    setEditingLutadorId(lutador.id);
+    setEditingLutadorNome(lutador.nome || '');
+    setEditingLutadorCategoria(lutador.categoria || '');
+    setEditingLutadorArte(lutador.arte || '');
+  };
+
+  const cancelEditLutador = () => {
+    setEditingLutadorId(null);
+    setEditingLutadorNome('');
+    setEditingLutadorCategoria('');
+    setEditingLutadorArte('');
+  };
+
+  const handleEditarLutador = async (e) => {
+    e.preventDefault();
+    if (!editingLutadorId) return;
+    try {
+      setLoadingMsg('Atualizando lutador...');
+      const response = await api.put(`/lutadores/${editingLutadorId}`, {
+        nome: editingLutadorNome,
+        categoria: editingLutadorCategoria,
+        arte: editingLutadorArte
+      });
+
+      const updated = response.data;
+      setLutadores(prev => prev.map(l => l.id === updated.id ? { ...l, ...updated } : l));
+      cancelEditLutador();
+      alert('Lutador atualizado com sucesso');
+    } catch (error) {
+      alert('Erro ao atualizar lutador: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoadingMsg('');
+    }
+  };
+
+  const handleDeletarLutador = async (id) => {
+    if (!id) return;
+    if (!confirm('Tem certeza que deseja deletar este lutador?')) return;
+    try {
+      setLoadingMsg('Removendo lutador...');
+      await api.delete(`/lutadores/${id}`);
+      setLutadores(prev => prev.filter(l => l.id !== id));
+      alert('Lutador removido com sucesso');
+    } catch (error) {
+      alert('Erro ao remover lutador: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoadingMsg('');
     }
@@ -357,6 +414,23 @@ export default function App() {
                   <div className="inline-block px-4 py-1 border border-brand-yellow/30 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] text-brand-yellow mb-4 bg-brand-yellow/5">
                     A Arena Definitiva
                   </div>
+                  {/* Edit lutador overlay */}
+                  {editingLutadorId === l.id && (
+                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-8">
+                      <form onSubmit={handleEditarLutador} className="bg-[#0b0b0b] p-6 rounded-xl border border-white/5 w-full max-w-md">
+                        <h3 className="text-lg font-black mb-4">Editar Lutador #{l.id}</h3>
+                        <div className="grid grid-cols-1 gap-3 mb-4">
+                          <input type="text" value={editingLutadorNome} onChange={(e) => setEditingLutadorNome(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white" placeholder="Nome" />
+                          <input type="text" value={editingLutadorCategoria} onChange={(e) => setEditingLutadorCategoria(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white" placeholder="Categoria" />
+                          <input type="text" value={editingLutadorArte} onChange={(e) => setEditingLutadorArte(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white" placeholder="Arte" />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <button type="button" onClick={cancelEditLutador} className="px-4 py-2 rounded-md bg-white/5">Cancelar</button>
+                          <button type="submit" className="px-4 py-2 rounded-md bg-brand-blue text-white font-bold">Salvar</button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
                   <h1 className="text-6xl md:text-9xl font-black italic tracking-tighter mb-4 leading-none font-display">
                     O OCTÓGONO <span className="text-brand-blue">TE</span> ESPERA
                   </h1>
@@ -529,6 +603,18 @@ export default function App() {
                   whileHover={{ y: -10 }}
                   className="group relative h-[400px] overflow-hidden rounded-2xl border-2 border-white/10 hover:border-brand-blue transition-all duration-500 bg-black cursor-pointer"
                 >
+                  <div className="absolute top-4 right-4 z-20 flex gap-2">
+                    {editingLutadorId === l.id ? (
+                      <>
+                        <button onClick={cancelEditLutador} className="bg-white/5 text-white px-3 py-1 rounded-md text-xs font-bold">Cancelar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => startEditLutador(l)} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-md text-xs font-bold">Editar</button>
+                        <button onClick={() => handleDeletarLutador(l.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-bold">Excluir</button>
+                      </>
+                    )}
+                  </div>
                   <img src={l.imagem} alt={l.nome} className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100 opacity-60 group-hover:opacity-100" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                   
