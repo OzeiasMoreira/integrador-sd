@@ -244,6 +244,22 @@ export default function App() {
     }
   };
 
+  const handleDeletarLuta = async (id) => {
+    if (!id) return;
+    if (!confirm('Tem certeza que deseja deletar esta luta?')) return;
+
+    try {
+      setLoadingMsg('Removendo luta...');
+      await api.delete(`/lutas/${id}`);
+      setLutas(prev => prev.filter(l => l.id !== id));
+      alert('Luta removida com sucesso');
+    } catch (error) {
+      alert('Erro ao remover luta: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoadingMsg('');
+    }
+  };
+
   const handleApostar = async (lutaId, lutadorId) => {
     const key = `${lutaId}-${lutadorId}`;
     const valor = Number(betAmounts[key] || 0);
@@ -590,7 +606,10 @@ export default function App() {
                           <button onClick={cancelEditLuta} className="bg-white/5 text-white px-3 py-1 rounded-md text-xs font-bold">Cancelar</button>
                         </>
                       ) : (
-                        <button onClick={() => startEditLuta(luta)} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-md text-xs font-bold">Editar</button>
+                        <>
+                          <button onClick={() => startEditLuta(luta)} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-md text-xs font-bold">Editar</button>
+                          <button onClick={() => handleDeletarLuta(luta.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-bold">Excluir</button>
+                        </>
                       )}
                     </div>
                     <div className="relative p-8 rounded-[22px] bg-[#0a0a0a] border border-white/5 flex flex-col lg:flex-row gap-8 items-center">
