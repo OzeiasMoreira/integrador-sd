@@ -39,6 +39,12 @@ export default function App() {
   const [novaLutaL2, setNovaLutaL2] = useState('');
   const [novaLutaData, setNovaLutaData] = useState('');
   const [novaLutaHorario, setNovaLutaHorario] = useState('');
+  // Edit fight state
+  const [editingLutaId, setEditingLutaId] = useState(null);
+  const [editLutaL1, setEditLutaL1] = useState('');
+  const [editLutaL2, setEditLutaL2] = useState('');
+  const [editLutaData, setEditLutaData] = useState('');
+  const [editLutaHorario, setEditLutaHorario] = useState('');
   
   const [betAmounts, setBetAmounts] = useState({});
   const [showBetFeedback, setShowBetFeedback] = useState(false);
@@ -191,6 +197,48 @@ export default function App() {
       setNovaLutaHorario('');
     } catch (error) {
       alert('Erro ao agendar luta: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoadingMsg('');
+    }
+  };
+
+  const startEditLuta = (luta) => {
+    setEditingLutaId(luta.id);
+    setEditLutaL1(String(luta.lutador1));
+    setEditLutaL2(String(luta.lutador2));
+    setEditLutaData(luta.data || '');
+    setEditLutaHorario(luta.horario || '');
+  };
+
+  const cancelEditLuta = () => {
+    setEditingLutaId(null);
+    setEditLutaL1('');
+    setEditLutaL2('');
+    setEditLutaData('');
+    setEditLutaHorario('');
+  };
+
+  const handleEditarLuta = async (e) => {
+    e.preventDefault();
+    if (!editingLutaId) return;
+    if (!editLutaL1 || !editLutaL2 || editLutaL1 === editLutaL2 || !editLutaData || !editLutaHorario) return alert('Preencha os campos corretamente');
+
+    try {
+      setLoadingMsg('Atualizando luta...');
+      const response = await api.put(`/lutas/${editingLutaId}`, {
+        data: editLutaData,
+        horario: editLutaHorario,
+        lutador1: Number(editLutaL1),
+        lutador2: Number(editLutaL2)
+      });
+
+      const updated = response.data;
+      // Atualiza lista local
+      setLutas(prev => prev.map(l => l.id === updated.id ? { ...l, ...updated } : l));
+      cancelEditLuta();
+      alert('Luta atualizada com sucesso');
+    } catch (error) {
+      alert('Erro ao atualizar luta: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoadingMsg('');
     }
@@ -536,6 +584,15 @@ export default function App() {
                 return (
                   <div key={luta.id} className="relative p-1 rounded-3xl bg-gradient-to-r from-brand-blue/20 via-black to-brand-yellow/20 overflow-hidden group">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-xl group-hover:bg-black/40 transition-all" />
+                    <div className="absolute top-4 right-6 z-20 flex gap-2">
+                      {editingLutaId === luta.id ? (
+                        <>
+                          <button onClick={cancelEditLuta} className="bg-white/5 text-white px-3 py-1 rounded-md text-xs font-bold">Cancelar</button>
+                        </>
+                      ) : (
+                        <button onClick={() => startEditLuta(luta)} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-md text-xs font-bold">Editar</button>
+                      )}
+                    </div>
                     <div className="relative p-8 rounded-[22px] bg-[#0a0a0a] border border-white/5 flex flex-col lg:flex-row gap-8 items-center">
                       
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 px-6 py-1 bg-white/10 rounded-b-xl border-x border-b border-white/10">
@@ -597,6 +654,31 @@ export default function App() {
                       </div>
 
                     </div>
+
+                    {/* Edit form overlay */}
+                    {editingLutaId === luta.id && (
+                      <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-8">
+                        <form onSubmit={handleEditarLuta} className="bg-[#0b0b0b] p-6 rounded-xl border border-white/5 w-full max-w-2xl">
+                          <h3 className="text-lg font-black mb-4">Editar Luta #{luta.id}</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                            <input type="date" value={editLutaData} onChange={(e) => setEditLutaData(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white" />
+                            <input type="time" value={editLutaHorario} onChange={(e) => setEditLutaHorario(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white" />
+                            <select value={editLutaL1} onChange={(e) => setEditLutaL1(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white">
+                              <option value="">Lutador 1</option>
+                              {lutadores.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+                            </select>
+                            <select value={editLutaL2} onChange={(e) => setEditLutaL2(e.target.value)} className="p-2 rounded-md bg-black/40 border border-white/10 text-white">
+                              <option value="">Lutador 2</option>
+                              {lutadores.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex justify-end gap-3">
+                            <button type="button" onClick={cancelEditLuta} className="px-4 py-2 rounded-md bg-white/5">Cancelar</button>
+                            <button type="submit" className="px-4 py-2 rounded-md bg-brand-blue text-white font-bold">Salvar</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
                   </div>
                 )
               })}
