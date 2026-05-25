@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:4000/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
 });
 
 const IMAGES = [
@@ -28,6 +28,12 @@ export default function App() {
   const [novoApostadorNome, setNovoApostadorNome] = useState('');
   const [novoApostadorEmail, setNovoApostadorEmail] = useState('');
   const [novoApostadorSenha, setNovoApostadorSenha] = useState('');
+  const [novoApostadorIdade, setNovoApostadorIdade] = useState('');
+  const [novoApostadorChavePix, setNovoApostadorChavePix] = useState('');
+
+  const [novoLutadorNome, setNovoLutadorNome] = useState('');
+  const [novoLutadorCategoria, setNovoLutadorCategoria] = useState('');
+  const [novoLutadorArte, setNovoLutadorArte] = useState('');
   
   const [novaLutaL1, setNovaLutaL1] = useState('');
   const [novaLutaL2, setNovaLutaL2] = useState('');
@@ -105,7 +111,9 @@ export default function App() {
       const response = await api.post('/apostadores', {
         nome: novoApostadorNome,
         email: novoApostadorEmail,
-        senha: novoApostadorSenha
+        senha: novoApostadorSenha,
+        idade: novoApostadorIdade ? Number(novoApostadorIdade) : 0,
+        chavePix: novoApostadorChavePix || ''
       });
       
       const novo = { ...response.data, saldo: 1000 };
@@ -116,9 +124,42 @@ export default function App() {
       setNovoApostadorNome('');
       setNovoApostadorEmail('');
       setNovoApostadorSenha('');
+      setNovoApostadorIdade('');
+      setNovoApostadorChavePix('');
       setActiveTab('dashboard');
     } catch (error) {
       alert('Erro ao criar conta: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoadingMsg('');
+    }
+  };
+
+  const handleCriarLutador = async (e) => {
+    e.preventDefault();
+    if (!novoLutadorNome || !novoLutadorCategoria) return;
+
+    try {
+      setLoadingMsg('Registrando lutador no Sistema...');
+      const response = await api.post('/lutadores', {
+        nome: novoLutadorNome,
+        categoria: novoLutadorCategoria,
+        arte: novoLutadorArte || 'Mista'
+      });
+
+      const novo = {
+        ...response.data,
+        imagem: IMAGES[response.data.id % 4] || IMAGES[0],
+        vitorias: Math.floor(Math.random() * 30),
+        derrotas: Math.floor(Math.random() * 10)
+      };
+
+      setLutadores([...lutadores, novo]);
+      setNovoLutadorNome('');
+      setNovoLutadorCategoria('');
+      setNovoLutadorArte('');
+      alert('Lutador registrado com sucesso!');
+    } catch (error) {
+      alert('Erro ao registrar lutador: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoadingMsg('');
     }
@@ -331,6 +372,27 @@ export default function App() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Idade</label>
+                  <input
+                    type="number"
+                    value={novoApostadorIdade}
+                    onChange={(e) => setNovoApostadorIdade(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-bold focus:outline-none focus:border-brand-blue transition-all"
+                    placeholder="18"
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Chave Pix</label>
+                  <input
+                    type="text"
+                    value={novoApostadorChavePix}
+                    onChange={(e) => setNovoApostadorChavePix(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-bold focus:outline-none focus:border-brand-blue transition-all"
+                    placeholder="chave Pix (CPF, email ou aleatória)"
+                  />
+                </div>
                 
                 <div className="p-4 bg-brand-green/10 border border-green-500/20 rounded-xl text-center">
                   <p className="text-xs font-bold uppercase text-green-500 mb-1 flex items-center justify-center gap-2"><Zap size={14} /> Bônus de Boas-vindas</p>
@@ -351,6 +413,49 @@ export default function App() {
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-6xl font-black italic mb-4 font-display">CATÁLOGO DE <span className="text-brand-blue">LUTADORES</span></h2>
               <p className="text-white/40 uppercase tracking-widest text-sm font-bold">Os melhores do mundo ({lutadores.length})</p>
+            </div>
+
+            <div className="mb-10 p-6 rounded-3xl bg-white/5 border border-white/10">
+              <h3 className="text-xl font-black uppercase tracking-widest mb-4 font-display">Registrar Novo Lutador</h3>
+              <form onSubmit={handleCriarLutador} className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Nome</label>
+                  <input
+                    type="text"
+                    value={novoLutadorNome}
+                    onChange={(e) => setNovoLutadorNome(e.target.value)}
+                    className="w-full bg-black border border-white/10 rounded-xl p-4 text-white font-bold focus:outline-none focus:border-brand-blue transition-all"
+                    placeholder="Nome do lutador"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Categoria</label>
+                  <input
+                    type="text"
+                    value={novoLutadorCategoria}
+                    onChange={(e) => setNovoLutadorCategoria(e.target.value)}
+                    className="w-full bg-black border border-white/10 rounded-xl p-4 text-white font-bold focus:outline-none focus:border-brand-blue transition-all"
+                    placeholder="Peso / Categoria"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Arte Marcial</label>
+                  <input
+                    type="text"
+                    value={novoLutadorArte}
+                    onChange={(e) => setNovoLutadorArte(e.target.value)}
+                    className="w-full bg-black border border-white/10 rounded-xl p-4 text-white font-bold focus:outline-none focus:border-brand-blue transition-all"
+                    placeholder="Ex.: Jiu-Jitsu, Muay Thai"
+                  />
+                </div>
+                <div className="sm:col-span-3 flex justify-end">
+                  <button type="submit" className="bg-brand-yellow hover:bg-neon-green text-black uppercase font-black tracking-widest px-6 py-4 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    Registrar Lutador
+                  </button>
+                </div>
+              </form>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
